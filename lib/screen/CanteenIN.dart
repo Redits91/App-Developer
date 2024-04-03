@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -42,6 +43,9 @@ class _CanteenINState extends State<CanteenIN> {
   String ul = "20";
   String system_user_login_id = "";
 
+  TextEditingController _dateController = TextEditingController();
+  DateTime? _selectedDate;
+
 
 
   List<String> data = [
@@ -54,6 +58,7 @@ class _CanteenINState extends State<CanteenIN> {
     super.initState();
     getSharedValue();
     getCategory();
+    _dateController.text = "${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year.toString()}";
     if (widget.id == '1' || widget.id == '2') {
       setState(() {
         hideSelectCategory = true;
@@ -111,11 +116,10 @@ class _CanteenINState extends State<CanteenIN> {
   List<dynamic> attendanceData = [];
   List<dynamic> date = [];
   List<dynamic> time = [];
-  getAttendanceIn() async {
+  getAttendanceData() async {
     try {
-      var response = await GetAttendanceINData(selectedBranch?.id ?? "", widget.id, ll, ul);
+      var response = await GetAttendanceData(selectedBranch?.id ?? "", widget.id,_dateController.text, ll, ul);
       if (response.statusCode == 200) {
-        print("responce : ${response.statusCode} " + "dropdown_branch_id "+dropdown_branch_id);
         var extractdata = json.decode(response.body);
         if (extractdata['ack'] == 1) {
           setState(() {
@@ -140,11 +144,10 @@ class _CanteenINState extends State<CanteenIN> {
     }
   }
 
-  getAttendanceOut() async {
+  getAttendanceDataCanteen() async {
     try {
-      var response = await GetAttendanceOutData(selectedBranch?.id ?? "", widget.id, ll, ul);
+      var response = await GetAttendanceDataforCanteen(selectedCategory?.id ?? "", dropdown_category_id,_dateController.text, ll, ul);
       if (response.statusCode == 200) {
-        print("responce : ${response.statusCode} " + "dropdown_branch_id "+dropdown_branch_id);
         var extractdata = json.decode(response.body);
         if (extractdata['ack'] == 1) {
           setState(() {
@@ -167,6 +170,16 @@ class _CanteenINState extends State<CanteenIN> {
     } catch (e) {
       print("Error: $e");
     }
+  }
+
+  FutureOr onGoBack(value) async {
+    print("hey");
+    attendanceData.clear();
+    data.clear();
+    time.clear();
+    ul = "0";
+    getAttendanceData();
+    getAttendanceDataCanteen();
   }
 
 
@@ -216,10 +229,10 @@ class _CanteenINState extends State<CanteenIN> {
                       dropdown_branch_id = selectedBranch!.id;
                       dropdown_branch_name = selectedBranch!.name;
                       if (widget.id == "1") {
-                        getAttendanceIn();
+                        getAttendanceData();
                       }
                       if (widget.id == "2") {
-                        getAttendanceOut();
+                        getAttendanceData();
                       }
                     } else {
                       // Handle the case when selectedstate is null
@@ -257,6 +270,9 @@ class _CanteenINState extends State<CanteenIN> {
                           if (selectedCategory != null) {
                             dropdown_category_id = selectedCategory!.id;
                             dropdown_category_name = selectedCategory!.name;
+                            if (widget.id == "3") {
+                              getAttendanceDataCanteen();
+                            }
                             print(dropdown_category_id);
                           } else {
                             // Handle the case when selectedstate is null
@@ -266,6 +282,37 @@ class _CanteenINState extends State<CanteenIN> {
                     },
                   ),
                 ],
+              ),
+            ),
+            SizedBox(height: 5,),
+            Text("Date Of Birth*",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                fontSize: 12,
+              ),
+            ),
+            SizedBox(height: 3,),
+            TextFormField(
+              controller: _dateController,
+              readOnly: true, // Set the text field as read-only to prevent manual text input
+              onTap: () {
+                _selectDate(context);
+              },
+              initialValue: null,
+              decoration: InputDecoration(
+                suffixIcon: Icon(Icons.calendar_month),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(2.0),
+                  borderSide: BorderSide(
+                    color: Colors.blue,
+                  ),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 5,
+                  horizontal: 15,
+                ),
               ),
             ),
             SizedBox(height: 10,),
@@ -391,7 +438,7 @@ class _CanteenINState extends State<CanteenIN> {
               showToast("Please select Category", color.red);
             } else {
 
-              Navigator.push(context, MaterialPageRoute(builder: (context) => myQRcode(id: widget.id, branchName: dropdown_branch_name, branchID: dropdown_branch_id)));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => myQRcode(id: widget.id, branchName: dropdown_branch_name, branchID: dropdown_branch_id))).then((value) => (onGoBack));
             }
 
           },
@@ -410,5 +457,35 @@ class _CanteenINState extends State<CanteenIN> {
       backgroundColor: backgroundColor,
       textColor: Colors.white,
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              surfaceTint: Colors.white,
+
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null && pickedDate != _selectedDate) {
+      setState(() {
+        _selectedDate = pickedDate;
+        _dateController.text =
+        // "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}";
+        "${_selectedDate!.day.toString().padLeft(2, '0')}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.year.toString()}";
+      });
+    }
   }
 }

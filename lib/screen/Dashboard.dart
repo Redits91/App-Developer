@@ -252,7 +252,8 @@ class _DashboardState extends State<Dashboard> {
       isLoading = true;
     });
     try {
-      var response = await GetBanner(system_user_login_id,login_user_type, uniqueId);
+      var response = await GetBanner(/*system_user_login_id*/"22",/*login_user_type*/"2", uniqueId);
+      print("uniqueId " + uniqueId);
       if (response.statusCode == 200) {
         setState(() {
           isLoading = false;

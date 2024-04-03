@@ -1,26 +1,73 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:hrbox/constant/color.dart' as color;
+import 'package:fluttertoast/fluttertoast.dart';
+import '../constant/MyPreferences.dart';
+import '../models/CommonModel.dart';
+import '../retrofit.dart';
 
-class EditEmployee extends StatefulWidget {
-  const EditEmployee({super.key});
+class AddEditEmployee extends StatefulWidget {
+  late String id;
+
+  AddEditEmployee({super.key, required this.id});
 
   @override
-  State<EditEmployee> createState() => _EditEmployeeState();
+  State<AddEditEmployee> createState() => _AddEditEmployeeState();
 }
 
-class _EditEmployeeState extends State<EditEmployee> {
-  List<String> report_type_list = ["item1","item2","item3"];
+class _AddEditEmployeeState extends State<AddEditEmployee> {
+  MyPreferences preferences = new MyPreferences();
+
+  List<String> report_type_list = ["item1", "item2", "item3"];
   bool isMale = false;
   bool isFemale = false;
+  bool isLoading = false;
   int? selectedMaritalStatus;
 
   TextEditingController _dateController = TextEditingController();
   DateTime? _selectedDate;
 
+  bool _isSameAddress = false;
+
+  TextEditingController _employeeName = TextEditingController();
+  TextEditingController _fatherName = TextEditingController();
+  TextEditingController _contectNumber = TextEditingController();
+  TextEditingController _emergancyNumber = TextEditingController();
+  TextEditingController _email = TextEditingController();
+  TextEditingController _nationality = TextEditingController();
+  TextEditingController _aadharNumber = TextEditingController();
+  TextEditingController _panNumber = TextEditingController();
   TextEditingController _currentAddressController = TextEditingController();
   TextEditingController _permanentAddressController = TextEditingController();
-  bool _isSameAddress = false;
+
+  String system_user_login_id = "";
+
+  List<CommonModel> branch_list = [];
+  String dropdown_branch_id = '';
+  String dropdown_branch_name = '';
+  CommonModel? selectedBranch;
+
+  List<CommonModel> grade_list = [];
+  String dropdown_grade_id = '0';
+  String dropdown_grade_name = '';
+  CommonModel? selectedGrade;
+
+  List<CommonModel> referance_list = [];
+  String dropdown_referance_id = '';
+  String dropdown_referance_name = '';
+  CommonModel? selectedreferance;
+
+  List<CommonModel> state_list = [];
+  String dropdown_state_id = '';
+  String dropdown_state_name = '';
+  CommonModel? selectedstate;
+
+  List<CommonModel> headQuarter_list = [];
+  String dropdown_headQuarter_id = '';
+  String dropdown_headQuarter_name = '';
+  CommonModel? selectedheadQuarter;
 
   @override
   void dispose() {
@@ -29,6 +76,230 @@ class _EditEmployeeState extends State<EditEmployee> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getSharedValue();
+  }
+
+  void getSharedValue() async {
+    system_user_login_id =
+        await preferences.getPreferences(MyPreferences.System_user_login_id);
+    getBranch();
+    getGrade();
+    getReference();
+    getState();
+    getHeadQuarter();
+    if (widget.id.isNotEmpty) {
+      getEmployeebyid();
+    }
+  }
+
+  getBranch() async {
+    try {
+      var response = await GetBranch(system_user_login_id);
+      if (response.statusCode == 200) {
+        var extractdata = json.decode(response.body);
+        if (extractdata['ack'] == 1) {
+          setState(() {
+            branch_list = List<CommonModel>.from(
+                extractdata["result"].map((x) => CommonModel.fromJson(x)));
+          });
+        } else {
+          print("Error: ${extractdata['ack_msg']}");
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  getGrade() async {
+    try {
+      var response = await GetGrade(system_user_login_id);
+      if (response.statusCode == 200) {
+        var extractdata = json.decode(response.body);
+        if (extractdata['ack'] == 1) {
+          setState(() {
+            grade_list = List<CommonModel>.from(
+                extractdata["result"].map((x) => CommonModel.fromJson(x)));
+          });
+        } else {
+          print("Error: ${extractdata['ack_msg']}");
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  getReference() async {
+    try {
+      var response = await GetRefrence(system_user_login_id);
+      if (response.statusCode == 200) {
+        var extractdata = json.decode(response.body);
+        if (extractdata['ack'] == 1) {
+          setState(() {
+            referance_list = List<CommonModel>.from(
+                extractdata["result"].map((x) => CommonModel.fromJson(x)));
+          });
+        } else {
+          print("Error: ${extractdata['ack_msg']}");
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  getState() async {
+    try {
+      var response = await GetState(system_user_login_id);
+      if (response.statusCode == 200) {
+        var extractdata = json.decode(response.body);
+        if (extractdata['ack'] == 1) {
+          setState(() {
+            state_list = List<CommonModel>.from(
+                extractdata["result"].map((x) => CommonModel.fromJson(x)));
+          });
+        } else {
+          print("Error: ${extractdata['ack_msg']}");
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  getHeadQuarter() async {
+    try {
+      var response = await GetHeadQuarter(system_user_login_id);
+      if (response.statusCode == 200) {
+        var extractdata = json.decode(response.body);
+        if (extractdata['ack'] == 1) {
+          setState(() {
+            headQuarter_list = List<CommonModel>.from(
+                extractdata["result"].map((x) => CommonModel.fromJson(x)));
+          });
+        } else {
+          print("Error: ${extractdata['ack_msg']}");
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  addEmployee() async {
+    String gender = isMale ? "1" : (isFemale ? "2" : "");
+    try {
+      var response = await AddEmployee(
+          system_user_login_id,
+          _employeeName.text,
+          dropdown_branch_id,
+          dropdown_grade_id,
+          dropdown_referance_id,
+          dropdown_state_id,
+          dropdown_headQuarter_id,
+          _fatherName.text,
+          gender,
+          selectedMaritalStatus.toString(),
+          _dateController.text,
+          _contectNumber.text,
+          _emergancyNumber.text,
+          _email.text,
+          _nationality.text,
+          _aadharNumber.text,
+          _panNumber.text,
+          _currentAddressController.text,
+          _permanentAddressController.text);
+      if (response.statusCode == 200) {
+        var extractedData = json.decode(response.body);
+        if (extractedData['ack'] == 1) {
+          showToast(extractedData['ack_msg'], color.green);
+        } else {
+          showToast(extractedData['ack_msg'], color.red);
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("Error: $error");
+    }
+  }
+
+  getEmployeebyid() async {
+    setState(() {
+      isLoading = true; // Show loader
+    });
+    try {
+      var response = await GetEmployeebyid(system_user_login_id, widget.id);
+      if (response.statusCode == 200) {
+        setState(() {
+          isLoading = false; // Hide loader even on error
+        });
+        var extractedData = json.decode(response.body);
+        if (extractedData['ack'] == 1) {
+          _employeeName.text =
+              extractedData['result'][0]['employee_name'].toString();
+          dropdown_branch_id =
+              extractedData['result'][0]['branch_id'].toString();
+          dropdown_grade_id = extractedData['result'][0]['grade_id'].toString();
+          dropdown_referance_id =
+              extractedData['result'][0]['refrences_id'].toString();
+          dropdown_state_id = extractedData['result'][0]['state_id'].toString();
+          dropdown_headQuarter_id =
+              extractedData['result'][0]['head_quarter'].toString();
+          _fatherName.text =
+              extractedData['result'][0]['father_spouse_name'].toString();
+          extractedData['result'][0]['gender'] == "1"
+              ? isMale = true
+              : isFemale = true;
+          extractedData['result'][0]['marital_status'] == "1"
+              ? selectedMaritalStatus = 1
+              : (extractedData['result'][0]['marital_status'] == "2"
+                  ? selectedMaritalStatus = 2
+                  : selectedMaritalStatus = 3);
+          _dateController.text =
+              extractedData['result'][0]['date_of_birth'].toString();
+          _contectNumber.text =
+              extractedData['result'][0]['contact_number'].toString();
+          _emergancyNumber.text = extractedData['result'][0]
+                  ['emergency_num_and_con_num']
+              .toString();
+          _email.text = extractedData['result'][0]['email_id'].toString();
+          _nationality.text =
+              extractedData['result'][0]['nationality'].toString();
+          _aadharNumber.text =
+              extractedData['result'][0]['aadhar_card_number'].toString();
+          _panNumber.text =
+              extractedData['result'][0]['pan_card_number'].toString();
+          _currentAddressController.text =
+              extractedData['result'][0]['current_address'].toString();
+          _permanentAddressController.text =
+              extractedData['result'][0]['permanent_address'].toString();
+          setState(() {});
+        } else {
+          showToast(extractedData['ack_msg'], color.red);
+        }
+      } else {
+        print("Failed to load data: ${response.statusCode}");
+      }
+    } catch (error) {
+      print("Error: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +312,8 @@ class _EditEmployeeState extends State<EditEmployee> {
           },
         ),
         title: Text(
-          "Edit Employee", style: TextStyle(color: color.white),
+          widget.id.isNotEmpty ? "Edit Employee" : "Add Employee",
+          style: TextStyle(color: color.white),
         ),
       ),
       body: SingleChildScrollView(
@@ -62,15 +334,25 @@ class _EditEmployeeState extends State<EditEmployee> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Employee Name*',
+                      Visibility(
+                        visible: isLoading,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                      Text(
+                        'Employee Name*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _employeeName,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -86,17 +368,23 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text('Branch Details*',
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        'Branch Details*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
-                      DropdownSearch<String>(
-                        dropdownSearchDecoration: InputDecoration(
+                      SizedBox(
+                        height: 3,
+                      ),
+                      DropdownButtonFormField<CommonModel>(
+                        decoration: InputDecoration(
+                          hintText: "Select Branch",
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.all(5),
                           focusedBorder: OutlineInputBorder(
@@ -106,29 +394,42 @@ class _EditEmployeeState extends State<EditEmployee> {
                             ),
                           ),
                         ),
-                        selectedItem: "Select Branch",
-                        items: report_type_list,
-                        itemAsString: (state) => state,
-        
-                        onChanged: (String? newvalue) {
+                        value: branch_list == '0' || branch_list.isEmpty
+                            ? null
+                            : branch_list.firstWhere(
+                              (e) => e.id == dropdown_branch_id,
+                          orElse: () => branch_list.first,
+                        ),
+                        items: branch_list.map((state) {
+                          return DropdownMenuItem<CommonModel>(
+                            value: state,
+                            child: Text(state.name),
+                          );
+                        }).toList(),
+                        onChanged: (newvalue) {
                           setState(() {
-                            if (newvalue != null) {
-        
-                            }
+                            dropdown_branch_id = newvalue!.id;
+                            dropdown_branch_name = newvalue!.name;
                           });
                         },
                       ),
-                      SizedBox(height: 10,),
-                      Text('Grade*',
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        'Grade*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
-                      DropdownSearch<String>(
-                        dropdownSearchDecoration: InputDecoration(
+                      SizedBox(
+                        height: 3,
+                      ),
+                      DropdownButtonFormField<CommonModel>(
+                        decoration: InputDecoration(
+                          hintText: "Select Grade",
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.all(5),
                           focusedBorder: OutlineInputBorder(
@@ -138,27 +439,42 @@ class _EditEmployeeState extends State<EditEmployee> {
                             ),
                           ),
                         ),
-                        items: report_type_list,
-                        itemAsString: (state) => state,
-                        onChanged: (String? newvalue) {
+                        value: dropdown_grade_id == '0' || grade_list.isEmpty
+                            ? null
+                            : grade_list.firstWhere(
+                                (e) => e.id == dropdown_grade_id,
+                                orElse: () => grade_list.first,
+                              ),
+                        items: grade_list.map((state) {
+                          return DropdownMenuItem<CommonModel>(
+                            value: state,
+                            child: Text(state.name),
+                          );
+                        }).toList(),
+                        onChanged: (newvalue) {
                           setState(() {
-                            if (newvalue != null) {
-        
-                            }
+                            dropdown_grade_id = newvalue!.id;
+                            dropdown_grade_name = newvalue!.name;
                           });
                         },
                       ),
-                      SizedBox(height: 10,),
-                      Text('References*',
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        'References*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
-                      DropdownSearch<String>(
-                        dropdownSearchDecoration: InputDecoration(
+                      SizedBox(
+                        height: 3,
+                      ),
+                      DropdownButtonFormField<CommonModel>(
+                        decoration: InputDecoration(
+                          hintText: "Select Reference",
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.all(5),
                           focusedBorder: OutlineInputBorder(
@@ -168,27 +484,43 @@ class _EditEmployeeState extends State<EditEmployee> {
                             ),
                           ),
                         ),
-                        items: report_type_list,
-                        itemAsString: (state) => state,
-                        onChanged: (String? newvalue) {
+                        value: dropdown_referance_id == '0' ||
+                                referance_list.isEmpty
+                            ? null
+                            : referance_list.firstWhere(
+                                (e) => e.id == dropdown_referance_id,
+                                orElse: () => referance_list.first,
+                              ),
+                        items: referance_list.map((state) {
+                          return DropdownMenuItem<CommonModel>(
+                            value: state,
+                            child: Text(state.name),
+                          );
+                        }).toList(),
+                        onChanged: (newvalue) {
                           setState(() {
-                            if (newvalue != null) {
-        
-                            }
+                            dropdown_referance_id = newvalue!.id;
+                            dropdown_referance_name = newvalue!.name;
                           });
                         },
                       ),
-                      SizedBox(height: 10,),
-                      Text('State*',
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        'State*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
-                      DropdownSearch<String>(
-                        dropdownSearchDecoration: InputDecoration(
+                      SizedBox(
+                        height: 3,
+                      ),
+                      DropdownButtonFormField<CommonModel>(
+                        decoration: InputDecoration(
+                          hintText: "Select State",
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.all(5),
                           focusedBorder: OutlineInputBorder(
@@ -198,27 +530,42 @@ class _EditEmployeeState extends State<EditEmployee> {
                             ),
                           ),
                         ),
-                        items: report_type_list,
-                        itemAsString: (state) => state,
-                        onChanged: (String? newvalue) {
+                        value: dropdown_state_id == '0' || state_list.isEmpty
+                            ? null
+                            : state_list.firstWhere(
+                                (e) => e.id == dropdown_state_id,
+                                orElse: () => state_list.first,
+                              ),
+                        items: state_list.map((state) {
+                          return DropdownMenuItem<CommonModel>(
+                            value: state,
+                            child: Text(state.name),
+                          );
+                        }).toList(),
+                        onChanged: (newvalue) {
                           setState(() {
-                            if (newvalue != null) {
-        
-                            }
+                            dropdown_state_id = newvalue!.id;
+                            dropdown_state_name = newvalue!.name;
                           });
                         },
                       ),
-                      SizedBox(height: 10,),
-                      Text('Head Quarter*',
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        'Head Quarter*',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
-                      DropdownSearch<String>(
-                        dropdownSearchDecoration: InputDecoration(
+                      SizedBox(
+                        height: 3,
+                      ),
+                      DropdownButtonFormField<CommonModel>(
+                        decoration: InputDecoration(
+                          hintText: "Select HeadQuarter",
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.all(5),
                           focusedBorder: OutlineInputBorder(
@@ -228,26 +575,42 @@ class _EditEmployeeState extends State<EditEmployee> {
                             ),
                           ),
                         ),
-                        items: report_type_list,
-                        itemAsString: (state) => state,
-                        onChanged: (String? newvalue) {
+                        value: dropdown_headQuarter_id == '0' ||
+                                headQuarter_list.isEmpty
+                            ? null
+                            : headQuarter_list.firstWhere(
+                                (e) => e.id == dropdown_headQuarter_id,
+                                orElse: () => headQuarter_list.first,
+                              ),
+                        items: headQuarter_list.map((state) {
+                          return DropdownMenuItem<CommonModel>(
+                            value: state,
+                            child: Text(state.name),
+                          );
+                        }).toList(),
+                        onChanged: (newvalue) {
                           setState(() {
-                            if (newvalue != null) {
-        
-                            }
+                            dropdown_headQuarter_id = newvalue!.id;
+                            dropdown_headQuarter_name = newvalue!.name;
                           });
                         },
                       ),
-                      SizedBox(height: 10,),
-                      Text("Father's / Spouse Name",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Father's / Spouse Name",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _fatherName,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -263,8 +626,11 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20,),
-                      Text("Gender",
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        "Gender",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
@@ -279,7 +645,8 @@ class _EditEmployeeState extends State<EditEmployee> {
                               setState(() {
                                 isMale = value ?? false;
                                 if (isMale) {
-                                  isFemale = false; // Uncheck female if male is checked
+                                  isFemale =
+                                      false; // Uncheck female if male is checked
                                 }
                               });
                             },
@@ -293,7 +660,8 @@ class _EditEmployeeState extends State<EditEmployee> {
                               setState(() {
                                 isFemale = value ?? false;
                                 if (isFemale) {
-                                  isMale = false; // Uncheck male if female is checked
+                                  isMale =
+                                      false; // Uncheck male if female is checked
                                 }
                               });
                             },
@@ -302,8 +670,11 @@ class _EditEmployeeState extends State<EditEmployee> {
                           Text('Female'),
                         ],
                       ),
-                      SizedBox(height: 10,),
-                      Text("Marital Status",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Marital Status",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
@@ -314,7 +685,7 @@ class _EditEmployeeState extends State<EditEmployee> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Radio<int>(
-                            value: 0,
+                            value: 1,
                             groupValue: selectedMaritalStatus,
                             onChanged: (value) {
                               setState(() {
@@ -325,7 +696,7 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                           Text('Single'),
                           Radio<int>(
-                            value: 1,
+                            value: 2,
                             groupValue: selectedMaritalStatus,
                             onChanged: (value) {
                               setState(() {
@@ -336,7 +707,7 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                           Text('Married'),
                           Radio<int>(
-                            value: 2,
+                            value: 3,
                             groupValue: selectedMaritalStatus,
                             onChanged: (value) {
                               setState(() {
@@ -348,18 +719,24 @@ class _EditEmployeeState extends State<EditEmployee> {
                           Text('Divorced'),
                         ],
                       ),
-                      SizedBox(height: 20,),
-                      Text("Date Of Birth*",
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Text(
+                        "Date Of Birth*",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
                         controller: _dateController,
-                        readOnly: true, // Set the text field as read-only to prevent manual text input
+                        readOnly: true,
+                        // Set the text field as read-only to prevent manual text input
                         onTap: () {
                           _selectDate(context);
                         },
@@ -379,16 +756,24 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Contact Number*",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Contact Number*",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _contectNumber,
+                        keyboardType: TextInputType.number,
+                        maxLength: 10,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -404,16 +789,24 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Emergancy Number And Contact Number",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Emergancy Number And Contact Number",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _emergancyNumber,
+                        keyboardType: TextInputType.number,
+                        maxLength: 10,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -429,16 +822,22 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Email ID",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Email ID",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _email,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -454,16 +853,22 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Nationality",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Nationality",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _nationality,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -479,16 +884,22 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Aadhar Card Number*",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Aadhar Card Number*",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
+                        controller: _aadharNumber,
                         initialValue: null,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
@@ -504,15 +915,51 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
-                      Text("Current Address",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Pan Card Number*",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
+                      TextFormField(
+                        controller: _panNumber,
+                        initialValue: null,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2.0),
+                            borderSide: BorderSide(
+                              color: Colors.blue,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 15,
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Current Address",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontSize: 12,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
                         controller: _currentAddressController,
                         initialValue: null,
@@ -531,7 +978,9 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10,),
+                      SizedBox(
+                        height: 10,
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
@@ -542,7 +991,8 @@ class _EditEmployeeState extends State<EditEmployee> {
                               setState(() {
                                 _isSameAddress = value!;
                                 if (_isSameAddress) {
-                                  _permanentAddressController.text = _currentAddressController.text;
+                                  _permanentAddressController.text =
+                                      _currentAddressController.text;
                                 }
                               });
                             },
@@ -550,15 +1000,20 @@ class _EditEmployeeState extends State<EditEmployee> {
                           Text('Click on chech box if both address\nare same'),
                         ],
                       ),
-                      SizedBox(height: 10,),
-                      Text("Permanent Address",
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        "Permanent Address",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           fontSize: 12,
                         ),
                       ),
-                      SizedBox(height: 3,),
+                      SizedBox(
+                        height: 3,
+                      ),
                       TextFormField(
                         controller: _permanentAddressController,
                         maxLines: 3,
@@ -576,9 +1031,13 @@ class _EditEmployeeState extends State<EditEmployee> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20,),
+                      SizedBox(
+                        height: 20,
+                      ),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          addEmployee();
+                        },
                         child: Text(
                           'SUBMIT',
                           style: TextStyle(fontSize: 15, color: color.white),
@@ -599,6 +1058,16 @@ class _EditEmployeeState extends State<EditEmployee> {
     );
   }
 
+  void showToast(String message, Color backgroundColor) {
+    Fluttertoast.showToast(
+      msg: message,
+      gravity: ToastGravity.BOTTOM,
+      toastLength: Toast.LENGTH_SHORT,
+      backgroundColor: backgroundColor,
+      textColor: Colors.white,
+    );
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -607,11 +1076,9 @@ class _EditEmployeeState extends State<EditEmployee> {
       lastDate: DateTime(2101),
       builder: (BuildContext context, Widget? child) {
         return Theme(
-
           data: ThemeData.light().copyWith(
             colorScheme: ColorScheme.light(
               surfaceTint: Colors.white,
-
             ),
           ),
           child: child!,
@@ -623,10 +1090,8 @@ class _EditEmployeeState extends State<EditEmployee> {
       setState(() {
         _selectedDate = pickedDate;
         _dateController.text =
-        "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}";
+            "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}";
       });
     }
   }
-
-
 }

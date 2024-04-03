@@ -142,8 +142,8 @@ class _LoginState extends State<Login> {
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Dashboard()));
           
         } else {
-          // showToast(extractedData['ack_msg'], color.red);
-          Get.snackbar("Error", extractedData['ack_msg'],backgroundColor: color.red,colorText: color.white,duration: Duration(seconds: 3));
+          showToast(extractedData['ack_msg'], color.red);
+          // Get.snackbar("Error", extractedData['ack_msg'],backgroundColor: color.red,colorText: color.white,duration: Duration(seconds: 3));
         }
       } else {
         print("Failed to load data: ${response.statusCode}");

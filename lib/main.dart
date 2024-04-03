@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hrbox/screen/Dashboard.dart';
 import 'package:hrbox/screen/Login.dart';
+import 'package:hrbox/screen/WebView.dart';
 import 'constant/MyPreferences.dart';
 import 'constant/color.dart' as color;
 
@@ -81,11 +82,13 @@ class _MyHomePageState extends State<MyHomePage> {
   void splashScreen() async {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(statusBarColor: color.primary_color));
     await Future.delayed(Duration(milliseconds: 3000), () {});
-    if (user_login_id == "") {
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyWebView()));
+
+    /* if (user_login_id == "") {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Login()));
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Dashboard()));
-    }
+    }*/
   }
 
 }
